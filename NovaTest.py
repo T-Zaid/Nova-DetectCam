@@ -243,7 +243,7 @@ def modelDetection():
     right_eye = cv2.imread('right_eye.png')
     left_eye = cv2.imread('left_eye.png')
     smoke = cv2.VideoCapture('smoke.gif')
-    filter1 = cv2.imread('filters/Magic_Hat.png', cv2.IMREAD_UNCHANGED)
+    filter1 = cv2.imread('eyes.png', cv2.IMREAD_UNCHANGED)
     smoke_counter = 0
 
     while cam.isOpened():
@@ -285,7 +285,7 @@ def modelDetection():
 
             # Iterate over the found faces.
             for face_num, face_landmarks in enumerate(mp_face_results.multi_face_landmarks):
-                dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Head")
+                dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Eyes")
                 image = applyFilter(filter1, image, dstMat)
 
         cv2.imshow('Nova Detect', image)
