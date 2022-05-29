@@ -209,11 +209,11 @@ def PositionGeneration(results):
 # the main driver function that will open the camera and detect
 def modelDetection():
     # starting the camera
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     right_eye = cv2.imread('right_eye.png')
     left_eye = cv2.imread('left_eye.png')
     smoke = cv2.VideoCapture('smoke.gif')
-    filter1 = cv2.imread('filters/Money_Hiest.png', cv2.IMREAD_UNCHANGED)
+    filter1 = cv2.imread('filters/Magic_Hat.png', cv2.IMREAD_UNCHANGED)
     smoke_counter = 0
 
     while cam.isOpened():
@@ -238,16 +238,15 @@ def modelDetection():
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mp_face_results = face_mesh_videos.process(image)
         mp_hands_results = hands.process(image)
-
         # coverting image to BGR because CV loves BGR
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        # if mp_face_results.multi_face_landmarks:
-        #     for face_landmarks in mp_face_results.multi_face_landmarks:
-        #         # drawing face landmarks, tip : FACE_CONNECTIONS changed to FACEMESH_TESSELATION
-        #         mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_TESSELATION, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_tesselation_style())
-        #         mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_CONTOURS, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style())
+        if mp_face_results.multi_face_landmarks:
+            for face_landmarks in mp_face_results.multi_face_landmarks:
+                # drawing face landmarks, tip : FACE_CONNECTIONS changed to FACEMESH_TESSELATION
+                mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_TESSELATION, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_tesselation_style())
+                mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_CONTOURS, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style())
 
         if mp_face_results.multi_face_landmarks:
             mouthStatus = isOpen(image, mp_face_results, 'MOUTH', threshold=15)
@@ -256,11 +255,13 @@ def modelDetection():
 
             # Iterate over the found faces.
             for face_num, face_landmarks in enumerate(mp_face_results.multi_face_landmarks):
-                dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Face")
-                image = applyFilter(filter1, image, dstMat)
+                dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Head")
+                
 
         if mp_hands_results.multi_hand_landmarks:
-            PositionGeneration(mp_hands_results)                
+            PositionGeneration(mp_hands_results)
+            if(isUP("finger1") and isUP("finger2") and not isUP("finger3") and not isUP("finger4") ):
+                    image = applyFilter(filter1, image, dstMat)                
             for hand_landmarks in mp_hands_results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS, mp_drawing_styles.get_default_hand_landmarks_style(), mp_drawing_styles.get_default_hand_connections_style())
 
@@ -271,3 +272,5 @@ def modelDetection():
 
     cam.release()
     cv2.destroyAllWindows()
+
+modelDetection()

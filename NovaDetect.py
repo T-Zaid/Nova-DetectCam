@@ -169,7 +169,7 @@ def overlay(image, filter_img, face_landmarks, face_part, INDEXES):
 # the main driver function that will open the camera and detect
 def modelDetection():
     # starting the camera
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     right_eye = cv2.imread('right_eye.png')
     left_eye = cv2.imread('left_eye.png')
     smoke = cv2.VideoCapture('smoke.gif')
