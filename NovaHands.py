@@ -97,4 +97,4 @@ def StartDetection():
             break
     cap.release()
 
-StartDetection()
+# StartDetection()
