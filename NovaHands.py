@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import psutil    
 from protobuf_to_dict import protobuf_to_dict
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -13,8 +14,12 @@ hand = {"thumb":[],
 def isUP(partname):
     if(hand[partname][3]['y']<hand[partname][2]['y'] and hand[partname][2]['y']<hand[partname][1]['y'] and hand[partname][1]['y']<hand[partname][0]['y']):
         return True
+    else:
+        return False
     
 def PositionGeneration(results):
+    #x is o right, 1 left. all values in middle
+    #y is 0 up, 1 down, all values in middle
     hand["thumb"]=[]
     hand["finger1"]=[]
     hand["finger2"]=[]
@@ -41,9 +46,12 @@ def PositionGeneration(results):
         print("UP")
     else:
         print("gesture does not meet")
-    #x is o right, 1 left. all values in middle
-    #y is 0 up, 1 down, all values in middle
-    #z is irrelevant
+    #this checks if process is running
+    for proc in psutil.process_iter():
+            # Check if process name contains the given name string.
+        if "eclipse".lower() in proc.name().lower():
+            print("yes")
+
 
 
 
