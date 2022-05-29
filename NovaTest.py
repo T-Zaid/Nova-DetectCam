@@ -166,31 +166,55 @@ def overlay(image, filter_img, face_landmarks, face_part, INDEXES):
     return annotated_image
 
 
-def newway(results, image, Filtertype):
-    topLeft = [float(results[0].landmark[54].x * image.shape[1]) - (float(results[0].landmark[54].x * image.shape[1])*0.10), float(results[0].landmark[54].y * image.shape[0]) - (float(results[0].landmark[54].y * image.shape[0]))*0.10]
-    topRight = [float(results[0].landmark[284].x * image.shape[1]) + (float(results[0].landmark[284].x * image.shape[1])*0.10) , float(results[0].landmark[284].y * image.shape[0]) - (float(results[0].landmark[284].y * image.shape[0])*0.10)]
-    bottomRight = [float(results[0].landmark[365].x * image.shape[1])+ (float(results[0].landmark[365].x * image.shape[1])*0.10) , float(results[0].landmark[365].y * image.shape[0]) + (float(results[0].landmark[365].y * image.shape[0])*0.10)]
-    bottomLeft = [float(results[0].landmark[136].x * image.shape[1]) - (float(results[0].landmark[136].x * image.shape[1])*0.10) , float(results[0].landmark[136].y * image.shape[0]) + (float(results[0].landmark[136].y * image.shape[0])*0.10)]
+def GetRectCoords(results, image, Filtertype):
 
-    dstMat = [ topLeft, topRight, bottomRight, bottomLeft ]
-    dstMat = np.array(dstMat)
+    topLeft, topRight, bottomLeft, bottomRight = [], [], [], []
+
+    # Creating the rectangle coordinates according to the filter type
+    if Filtertype == "Face":
+        topLeft = [float(results[0].landmark[54].x * image.shape[1]) - (float(results[0].landmark[54].x * image.shape[1])*0.10), float(results[0].landmark[54].y * image.shape[0]) - (float(results[0].landmark[54].y * image.shape[0]))*0.10]
+        topRight = [float(results[0].landmark[284].x * image.shape[1]) + (float(results[0].landmark[284].x * image.shape[1])*0.10) , float(results[0].landmark[284].y * image.shape[0]) - (float(results[0].landmark[284].y * image.shape[0])*0.10)]
+        bottomRight = [float(results[0].landmark[365].x * image.shape[1])+ (float(results[0].landmark[365].x * image.shape[1])*0.10) , float(results[0].landmark[365].y * image.shape[0]) + (float(results[0].landmark[365].y * image.shape[0])*0.10)]
+        bottomLeft = [float(results[0].landmark[136].x * image.shape[1]) - (float(results[0].landmark[136].x * image.shape[1])*0.10) , float(results[0].landmark[136].y * image.shape[0]) + (float(results[0].landmark[136].y * image.shape[0])*0.10)]
+
+    elif Filtertype == "Eyes":
+        topLeft = [float(results[0].landmark[21].x * image.shape[1]), float(results[0].landmark[21].y * image.shape[0])]
+        topRight = [float(results[0].landmark[251].x * image.shape[1]) , float(results[0].landmark[251].y * image.shape[0])]
+        bottomRight = [float(results[0].landmark[323].x * image.shape[1]) , float(results[0].landmark[323].y * image.shape[0])]
+        bottomLeft = [float(results[0].landmark[93].x * image.shape[1]) , float(results[0].landmark[93].y * image.shape[0])]
+
+    elif Filtertype == "Head":
+        topLeft = [float(results[0].landmark[54].x * image.shape[1]) , float(results[0].landmark[54].y * image.shape[0]) - (float(results[0].landmark[54].y * image.shape[0]))*0.50]
+        topRight = [float(results[0].landmark[251].x * image.shape[1]) , float(results[0].landmark[54].y * image.shape[0]) - (float(results[0].landmark[54].y * image.shape[0])*0.50)]
+        bottomRight = [float(results[0].landmark[251].x * image.shape[1]) , float(results[0].landmark[251].y * image.shape[0])]
+        bottomLeft = [float(results[0].landmark[54].x * image.shape[1]) , float(results[0].landmark[54].y * image.shape[0])]
+
+    elif Filtertype == "Mustache":
+        topLeft = [float(results[0].landmark[205].x * image.shape[1]), float(results[0].landmark[205].y * image.shape[0])]
+        topRight = [float(results[0].landmark[425].x * image.shape[1]) , float(results[0].landmark[425].y * image.shape[0])]
+        bottomRight = [float(results[0].landmark[436].x * image.shape[1]) , float(results[0].landmark[436].y * image.shape[0])]
+        bottomLeft = [float(results[0].landmark[216].x * image.shape[1]) , float(results[0].landmark[216].y * image.shape[0])]
+
+    elif Filtertype == "Covid":
+        topLeft = [float(results[0].landmark[127].x * image.shape[1]), float(results[0].landmark[127].y * image.shape[0])]
+        topRight = [float(results[0].landmark[356].x * image.shape[1]) , float(results[0].landmark[356].y * image.shape[0])]
+        bottomRight = [float(results[0].landmark[365].x * image.shape[1]) , float(results[0].landmark[152].y * image.shape[0])]
+        bottomLeft = [float(results[0].landmark[136].x * image.shape[1]) , float(results[0].landmark[152].y * image.shape[0])]
+
+    dstMat = np.array([ topLeft, topRight, bottomRight, bottomLeft ])
     return dstMat
 
 def applyFilter(source, imageFace, dstMat):
     (imgH, imgW) = imageFace.shape[:2]
 
-    #filterImg = cv2.resize(filterImg,(face_width,face_height))
-    # grab the spatial dimensions of the source image and define the
-    # transform matrix for the *source* image in top-left, top-right,
-    # bottom-right, and bottom-left order
+    # defining the transform matrix for the source image using the height and width factor
     (srcH, srcW) = source.shape[:2]          
     srcMat = np.array([[0, 0], [srcW, 0], [srcW, srcH], [0, srcH]])
 
-    # compute the homography matrix and then warp the source image to the
+    # calculating the homography matrix and then warping the source image to the
     # destination based on the homography
     (H, _) = cv2.findHomography(srcMat, dstMat)
     warped = cv2.warpPerspective(source, H, (imgW, imgH))
-
 
     # Split out the transparency mask from the colour info
     overlay_img = warped[:,:,:3] # Grab the BRG planes
@@ -219,7 +243,7 @@ def modelDetection():
     right_eye = cv2.imread('right_eye.png')
     left_eye = cv2.imread('left_eye.png')
     smoke = cv2.VideoCapture('smoke.gif')
-    filter1 = cv2.imread('filters/Money_Hiest.png', cv2.IMREAD_UNCHANGED)
+    filter1 = cv2.imread('filters/Magic_Hat.png', cv2.IMREAD_UNCHANGED)
     smoke_counter = 0
 
     while cam.isOpened():
@@ -258,11 +282,10 @@ def modelDetection():
             mouthStatus = isOpen(image, mp_face_results, 'MOUTH', threshold=15)
             LeyeStatus = isOpen(image, mp_face_results, 'LEFT EYE', threshold=5)
             ReyeStatus = isOpen(image, mp_face_results, 'RIGHT EYE', threshold=5)
-            # print(step, mouthStatus, LeyeStatus, ReyeStatus)
 
             # Iterate over the found faces.
             for face_num, face_landmarks in enumerate(mp_face_results.multi_face_landmarks):
-                dstMat = newway(mp_face_results.multi_face_landmarks, image, "smth")
+                dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Head")
                 image = applyFilter(filter1, image, dstMat)
 
         cv2.imshow('Nova Detect', image)
