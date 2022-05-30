@@ -21,13 +21,12 @@ mp_hands = mp.solutions.hands
 #   min_tracking_confidence=0.5
 # )
 
-face_mesh_videos = mp_face.FaceMesh(static_image_mode = False, max_num_faces = 2, min_detection_confidence = 0.7, min_tracking_confidence = 0.7)
+face_mesh_videos = mp_face.FaceMesh(static_image_mode = False, max_num_faces = 1, min_detection_confidence = 0.7, min_tracking_confidence = 0.7)
 hands = mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
 def GestureChecker():
     if(isUP("finger1") and isUP("finger2") and not isUP("finger3") and not isUP("finger4") ):
-        print("thumbsup")
-        return "1and2_V"
+        return "Veetit"
     elif(isUP("finger1") and isUP("finger4") and not isUP("finger3") and not isUP("finger2") and hand["thumb"][3]['x']>hand["finger1"][0]['x']):
         return "spiderman"
     elif(isDown("finger1") and isDown("finger2") and isDown("finger3") and isDown("finger4") and isUP("thumb")):
@@ -39,7 +38,6 @@ def GestureChecker():
     elif(isUP("thumb")  and DistanceBTW("finger1")<0.25 and not isDown("finger1",'x') and isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')):
         return "gun"
     elif(isUP("thumb")  and isDown("finger1",'x') and isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')):
-        print("thumbsup")
         return "thumbsup"
     elif(isDown("thumb")  and isDown("finger1",'x') and isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')):
         print("thumbsdown")
@@ -325,11 +323,16 @@ def PositionGeneration(results):
 def modelDetection():
     # starting the camera
     cam = cv2.VideoCapture(0)
-    right_eye = cv2.imread('right_eye.png')
-    left_eye = cv2.imread('left_eye.png')
-    smoke = cv2.VideoCapture('smoke.gif')
-    filter1 = cv2.imread('filters/Magic_Hat.png', cv2.IMREAD_UNCHANGED)
+    right_eye = cv2.imread('filters/red_eyes_right.png', cv2.IMREAD_UNCHANGED)
+    left_eye = cv2.imread('filters/red_eyes_left.png', cv2.IMREAD_UNCHANGED)
+    smoke = cv2.VideoCapture('filters/smoke.gif')
+    Hat_filter = cv2.imread('filters/Magic_Hat.png', cv2.IMREAD_UNCHANGED)
+    Yoru_filter = cv2.imread('filters/Yoru_Mask.png', cv2.IMREAD_UNCHANGED)
+    Mustache_filter = cv2.imread('filters/mustache.png', cv2.IMREAD_UNCHANGED)
+    Glass_filter = cv2.imread('filters/thug_glasses.png', cv2.IMREAD_UNCHANGED)
+    Mask_filter = cv2.imread('filters/Mask.png', cv2.IMREAD_UNCHANGED)
     smoke_counter = 0
+    flag = [False, False, False, False, False, False]
 
     while cam.isOpened():
         success, image = cam.read()
@@ -357,28 +360,86 @@ def modelDetection():
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-        if mp_face_results.multi_face_landmarks:
-            for face_landmarks in mp_face_results.multi_face_landmarks:
+        # if mp_face_results.multi_face_landmarks:
+        #     for face_landmarks in mp_face_results.multi_face_landmarks:
                 # drawing face landmarks, tip : FACE_CONNECTIONS changed to FACEMESH_TESSELATION
-                mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_TESSELATION, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_tesselation_style())
-                mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_CONTOURS, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style())
+                # mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_TESSELATION, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_tesselation_style())
+                # mp_drawing.draw_landmarks(image, face_landmarks, mp_face.FACEMESH_CONTOURS, landmark_drawing_spec=None, connection_drawing_spec=mp_drawing_styles.get_default_face_mesh_contours_style())
 
         if mp_face_results.multi_face_landmarks:
+            
             mouthStatus = isOpen(image, mp_face_results, 'MOUTH', threshold=15)
             LeyeStatus = isOpen(image, mp_face_results, 'LEFT EYE', threshold=5)
             ReyeStatus = isOpen(image, mp_face_results, 'RIGHT EYE', threshold=5)
 
             # Iterate over the found faces.
             for face_num, face_landmarks in enumerate(mp_face_results.multi_face_landmarks):
-                dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Head")
+                
+                Head_dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Head")
+                Face_dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Face")
+                Mus_dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Mustache")
+                Eye_dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Eyes")
+                Mask_dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Covid")
+                
+                if (flag[5]):
+                    if ReyeStatus[face_num] == 'OPEN':
+                        image = overlay(image, right_eye, face_landmarks, 'RIGHT EYE', mp_face.FACEMESH_RIGHT_EYE)
+                    
+                    if LeyeStatus[face_num] == 'OPEN':
+                        image = overlay(image, left_eye, face_landmarks, 'LEFT EYE', mp_face.FACEMESH_LEFT_EYE)
+                
+                    if mouthStatus[face_num] == 'OPEN':
+                        image = overlay(image, smoke_frame, face_landmarks, 'MOUTH', mp_face.FACEMESH_LIPS)
+
                 
 
         if mp_hands_results.multi_hand_landmarks:
+            
             PositionGeneration(mp_hands_results)
-            if(GestureChecker()=="trimmer"):
-                    image = applyFilter(filter1, image, dstMat)                
+            
+            if(GestureChecker() == "thumbsup"):
+                flag[0] = True
+
+            elif (GestureChecker() == "fist"):
+                flag[1] = True
+
+            elif (GestureChecker() == "spiderman"):
+                flag[2] = True
+
+            elif (GestureChecker() == "handUP_open"):
+                flag[3] = True
+
+            elif (GestureChecker() == "handUP_close"):
+                flag[4] = True
+
+            elif (GestureChecker() == "gun"):
+                flag[5] = True
+
+            elif (GestureChecker() == "Veetit"):
+                print("closing all")
+                flag = [False, False, False, False, False, False]
+
+            else:
+                pass
+
             for hand_landmarks in mp_hands_results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS, mp_drawing_styles.get_default_hand_landmarks_style(), mp_drawing_styles.get_default_hand_connections_style())
+
+        if (flag[0]):
+            image = applyFilter(Hat_filter, image, Head_dstMat)
+        
+        if (flag[1]):
+            image = applyFilter(Glass_filter, image, Eye_dstMat)
+        
+        if (flag[2]):
+            image = applyFilter(Mustache_filter, image, Mus_dstMat)
+        
+        if (flag[3]):
+            image = applyFilter(Yoru_filter, image, Face_dstMat)
+        
+        if (flag[4]):
+            image = applyFilter(Mask_filter, image, Mask_dstMat)
+
 
         cv2.imshow('Nova Detect', image)
         
