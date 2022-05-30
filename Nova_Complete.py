@@ -24,7 +24,31 @@ mp_hands = mp.solutions.hands
 face_mesh_videos = mp_face.FaceMesh(static_image_mode = False, max_num_faces = 2, min_detection_confidence = 0.7, min_tracking_confidence = 0.7)
 hands = mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 
-
+def GestureChecker():
+    if(isUP("finger1") and isUP("finger2") and not isUP("finger3") and not isUP("finger4") ):
+        print("thumbsup")
+        return "1and2_V"
+    elif(isUP("finger1") and isUP("finger4") and not isUP("finger3") and not isUP("finger2") and hand["thumb"][3]['x']>hand["finger1"][0]['x']):
+        return "spiderman"
+    elif(isDown("finger1") and isDown("finger2") and isDown("finger3") and isDown("finger4") and isUP("thumb")):
+        return "fist"
+    elif(isUP("finger1") and isUP("finger2") and isUP("finger3") and isUP("finger4") and isUP("thumb") and ArePartsAway("finger1","finger2") and ArePartsAway("finger2","finger3") and ArePartsAway("finger3","finger4")):
+        return "handUP_open"
+    elif(isUP("finger1") and isUP("finger2") and isUP("finger3") and isUP("finger4") and isUP("thumb") and not ArePartsAway("finger1","finger2") and not ArePartsAway("finger2","finger3") and not ArePartsAway("finger3","finger4")):
+        return "handUP_close"
+    elif(isUP("thumb")  and DistanceBTW("finger1")<0.25 and not isDown("finger1",'x') and isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')):
+        return "gun"
+    elif(isUP("thumb")  and isDown("finger1",'x') and isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')):
+        print("thumbsup")
+        return "thumbsup"
+    elif(isDown("thumb")  and isDown("finger1",'x') and isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')):
+        print("thumbsdown")
+        return "thumbsdown"
+    elif(isUP("finger4") and not isUP("finger3") and not isUP("finger2") and not isUP("finger1") and abs(hand["thumb"][3]['x']-hand["finger1"][1]['x'])<0.06):
+        return "pinky"
+    elif(isUP("finger4") and isUP("thumb") and not isUP("finger3") and not isUP("finger2") and not isUP("finger1")):
+        return "trimmer"
+    
 # Function that provides the status of faceparts as open or closed
 def isOpen(image, face_mesh_results, face_part, threshold=5):
     '''
@@ -70,6 +94,10 @@ def isOpen(image, face_mesh_results, face_part, threshold=5):
             status[face_no] = 'CLOSE'
     
         return status
+
+def DistanceBTW(partname):
+    return abs(hand[partname][3]['y']-hand[partname][0]['y'])
+
 
 def Parts_Measurements(image, face_landmarks, indexes):
     
@@ -249,7 +277,23 @@ def isUP(partname):
         return True
     else:
         return False
+def isDown(partname,axis='y'):
     
+    if(axis=='y'and hand[partname][1][axis]<hand[partname][2][axis] and hand[partname][1][axis]<hand[partname][3][axis]):
+        return True
+    if((axis=='x'and hand[partname][1][axis]>hand[partname][2][axis] and hand[partname][1][axis]>hand[partname][3][axis])):
+        return True
+    else:
+        return False
+
+def ArePartsAway(part1,part2):
+    distancestart = abs(hand[part1][0]['x'] - hand[part2][0]['x'])
+    distanceend = abs(hand[part1][3]['x'] - hand[part2][3]['x'])
+    if(distanceend>1.3*distancestart and abs(hand[part1][3]['y']-hand[part1][0]['y'])>0.1):
+        return True
+    else:
+        return False
+
 def PositionGeneration(results):
     #x is o right, 1 left. all values in middle
     #y is 0 up, 1 down, all values in middle
@@ -275,10 +319,7 @@ def PositionGeneration(results):
             hand["finger4"].append(pos)
         i=i+1
     
-    if(isUP("finger1") and isUP("finger2") and not isUP("finger3") and not isUP("finger4") ):
-        print("UP")
-    else:
-        print("gesture does not meet")
+    
 
 # the main driver function that will open the camera and detect
 def modelDetection():
@@ -334,7 +375,7 @@ def modelDetection():
 
         if mp_hands_results.multi_hand_landmarks:
             PositionGeneration(mp_hands_results)
-            if(isUP("finger1") and isUP("finger2") and not isUP("finger3") and not isUP("finger4") ):
+            if(GestureChecker()=="trimmer"):
                     image = applyFilter(filter1, image, dstMat)                
             for hand_landmarks in mp_hands_results.multi_hand_landmarks:
                 mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS, mp_drawing_styles.get_default_hand_landmarks_style(), mp_drawing_styles.get_default_hand_connections_style())

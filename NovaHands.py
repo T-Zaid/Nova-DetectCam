@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+from numpy import true_divide
 import psutil    
 from protobuf_to_dict import protobuf_to_dict
 mp_drawing = mp.solutions.drawing_utils
@@ -19,6 +20,26 @@ def isUP(partname):
     else:
         return False
     
+def isDown(partname,axis='y'):
+    if(hand[partname][1][axis]<hand[partname][2][axis] and hand[partname][1][axis]<hand[partname][3][axis]):
+        return True
+    else:
+        return False
+
+def ArePartsAway(part1,part2):
+    distancestart = abs(hand[part1][0]['x'] - hand[part2][0]['x'])
+    distanceend = abs(hand[part1][3]['x'] - hand[part2][3]['x'])
+    print("end: " + str(hand[part1][3]['y']) + " start: " + str(hand[part1][0]['y']))
+    if(distanceend>1.3*distancestart and abs(hand[part1][3]['y']-hand[part1][0]['y'])>0.1):
+        return True
+    else:
+        return False
+
+
+def DistanceBTW(partname):
+    print(abs(hand[partname][3]['y']-hand[partname][0]['y']))
+    return abs(hand[partname][3]['y']-hand[partname][0]['y'])
+
 def PositionGeneration(results):
     #x is o right, 1 left. all values in middle
     #y is 0 up, 1 down, all values in middle
@@ -43,11 +64,8 @@ def PositionGeneration(results):
         if( 17 <= i <= 20):
             hand["finger4"].append(pos)
         i=i+1
-    
-    if(isUP("finger1") and isUP("finger2") and not isUP("finger3") and not isUP("finger4") ):
-        print("UP")
-    else:
-        print("gesture does not meet")
+    print((isDown("finger2",'x') and isDown("finger3",'x') and isDown("finger4",'x')))
+    #print((isDown("finger1") and isDown("finger2") and isDown("finger3") and isDown("finger4") and isUP("thumb")))
     #this checks if process is running
     # for proc in psutil.process_iter():
     #         # Check if process name contains the given name string.
@@ -97,4 +115,4 @@ def StartDetection():
             break
     cap.release()
 
-# StartDetection()
+StartDetection()
