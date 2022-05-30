@@ -240,10 +240,10 @@ def applyFilter(source, imageFace, dstMat):
 def modelDetection():
     # starting the camera
     cam = cv2.VideoCapture(1)
-    right_eye = cv2.imread('right_eye.png')
-    left_eye = cv2.imread('left_eye.png')
-    smoke = cv2.VideoCapture('smoke.gif')
-    filter1 = cv2.imread('eyes.png', cv2.IMREAD_UNCHANGED)
+    right_eye = cv2.imread('filters/red_eyes_right.png')
+    left_eye = cv2.imread('filters/red_eyes_left.png')
+    smoke = cv2.VideoCapture('filters/smoke.gif')
+    filter1 = cv2.imread('filters/thug_glasses.png', cv2.IMREAD_UNCHANGED)
     smoke_counter = 0
 
     while cam.isOpened():
@@ -287,6 +287,14 @@ def modelDetection():
             for face_num, face_landmarks in enumerate(mp_face_results.multi_face_landmarks):
                 dstMat = GetRectCoords(mp_face_results.multi_face_landmarks, image, "Eyes")
                 image = applyFilter(filter1, image, dstMat)
+                # if ReyeStatus[face_num] == 'OPEN':
+                #     image = overlay(image, right_eye, face_landmarks, 'RIGHT EYE', mp_face.FACEMESH_RIGHT_EYE)
+                
+                # if LeyeStatus[face_num] == 'OPEN':
+                #     image = overlay(image, left_eye, face_landmarks, 'LEFT EYE', mp_face.FACEMESH_LEFT_EYE)
+               
+                # if mouthStatus[face_num] == 'OPEN':
+                #     image = overlay(image, smoke_frame, face_landmarks, 'MOUTH', mp_face.FACEMESH_LIPS)
 
         cv2.imshow('Nova Detect', image)
         
@@ -297,4 +305,4 @@ def modelDetection():
     cv2.destroyAllWindows()
     
 
-# modelDetection()
+modelDetection()

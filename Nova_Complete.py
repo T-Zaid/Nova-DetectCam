@@ -163,6 +163,80 @@ def applyFilter(source, imageFace, dstMat):
     output = np.uint8(cv2.addWeighted(face_part, 255.0, overlay_part, 255.0, 0.0))
     return output
 
+def overlay(image, filter_img, face_landmarks, face_part, INDEXES):
+    '''
+    This function will overlay a filter image over a face part of a person in the image/frame.
+    Args:
+        image:          The image of a person on which the filter image will be overlayed.
+        filter_img:     The filter image that is needed to be overlayed on the image of the person.
+        face_landmarks: The facial landmarks of the person in the image.
+        face_part:      The name of the face part on which the filter image will be overlayed.
+        INDEXES:        The indexes of landmarks of the face part.
+    Returns:
+        annotated_image: The image with the overlayed filter on the top of the specified face part.
+    '''
+    
+    annotated_image = image.copy()
+    
+    # Errors can come when it resizes the filter image to a too small or a too large size .
+    # So use a try block to avoid application crashing.
+    try:
+    
+        # Get the width and height of filter image.
+        filter_img_height, filter_img_width, _  = filter_img.shape
+
+        # Get the height of the face part on which we will overlay the filter image.
+        _, face_part_height, landmarks = Parts_Measurements(image, face_landmarks, INDEXES)
+        
+        # Specify the height to which the filter image is required to be resized.
+        required_height = int(face_part_height*3)
+        
+        # Resize the filter image to the required height, while keeping the aspect ratio constant. 
+        resized_filter_img = cv2.resize(filter_img, (int(filter_img_width * (required_height / filter_img_height)), required_height))
+        
+        # Get the new width and height of filter image.
+        filter_img_height, filter_img_width, _  = resized_filter_img.shape
+
+        # Convert the image to grayscale and apply the threshold to get the mask image.
+        _, filter_img_mask = cv2.threshold(cv2.cvtColor(resized_filter_img, cv2.COLOR_BGR2GRAY), 25, 255, cv2.THRESH_BINARY_INV)
+
+        # Calculate the center of the face part.
+        center = landmarks.mean(axis=0).astype("int")
+
+        # Check if the face part is mouth.
+        if face_part == 'MOUTH':
+
+            # Calculate the location where the smoke filter will be placed.  
+            location = (int(center[0] - filter_img_width / 3), int(center[1]))
+
+        # Otherwise if the face part is an eye.
+        else:
+
+            # Calculate the location where the eye filter image will be placed.  
+            location = (int(center[0]-filter_img_width/2), int(center[1]-filter_img_height/2))
+
+        # Retrieve the region of interest from the image where the filter image will be placed.
+        ROI = image[location[1]: location[1] + filter_img_height, location[0]: location[0] + filter_img_width]
+
+        # Perform Bitwise-AND operation. This will set the pixel values of the region where,
+        # filter image will be placed to zero.
+        resultant_image = cv2.bitwise_and(ROI, ROI, mask=filter_img_mask)
+
+        # Add the resultant image and the resized filter image.
+        # This will update the pixel values of the resultant image at the indexes where 
+        # pixel values are zero, to the pixel values of the filter image.
+        resultant_image = cv2.add(resultant_image, resized_filter_img)
+
+        # Update the image's region of interest with resultant image.
+        annotated_image[location[1]: location[1] + filter_img_height, location[0]: location[0] + filter_img_width] = resultant_image
+            
+    # Catch and handle the error(s).
+    except Exception as e:
+        pass
+        
+    # Return the annotated image.
+    return annotated_image
+
 
 hand = {"thumb":[],
         "finger1": [],
