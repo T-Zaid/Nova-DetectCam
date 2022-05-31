@@ -332,7 +332,8 @@ def modelDetection():
     Glass_filter = cv2.imread('filters/thug_glasses.png', cv2.IMREAD_UNCHANGED)
     Mask_filter = cv2.imread('filters/Mask.png', cv2.IMREAD_UNCHANGED)
     smoke_counter = 0
-    flag = [False, False, False, False, False, False]
+    flag = [False, False, False, False, False, False, False]
+
 
     while cam.isOpened():
         success, image = cam.read()
@@ -400,7 +401,7 @@ def modelDetection():
             if(GestureChecker() == "thumbsup"):
                 flag[0] = True
 
-            elif (GestureChecker() == "fist"):
+            elif (GestureChecker() == "thumbsdown"):
                 flag[1] = True
 
             elif (GestureChecker() == "spiderman"):
@@ -417,13 +418,15 @@ def modelDetection():
 
             elif (GestureChecker() == "Veetit"):
                 print("closing all")
-                flag = [False, False, False, False, False, False]
+                flag = [False, False, False, False, False, False,False]
+            elif (GestureChecker() == "trimmer"):
+                flag[6] = True
 
             else:
                 pass
 
-            for hand_landmarks in mp_hands_results.multi_hand_landmarks:
-                mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS, mp_drawing_styles.get_default_hand_landmarks_style(), mp_drawing_styles.get_default_hand_connections_style())
+            # for hand_landmarks in mp_hands_results.multi_hand_landmarks:
+            #     mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS, mp_drawing_styles.get_default_hand_landmarks_style(), mp_drawing_styles.get_default_hand_connections_style())
 
         if (flag[0]):
             image = applyFilter(Hat_filter, image, Head_dstMat)
@@ -439,6 +442,17 @@ def modelDetection():
         
         if (flag[4]):
             image = applyFilter(Mask_filter, image, Mask_dstMat)
+        
+        if (flag[6]):
+            flag[6]=False
+            captured_image = cv2.copyMakeBorder(src=image, top=5, bottom=5, left=5, right=5,
+                                                    borderType=cv2.BORDER_CONSTANT)
+            cv2.imwrite('Captured_Image.png', captured_image)
+            resized = cv2.resize(captured_image, (400, 300)) 
+            cv2.imshow("Captured",resized)
+            cv2.waitKey(1000)
+            cv2.destroyWindow("Captured")
+            
 
 
         cv2.imshow('Nova Detect', image)

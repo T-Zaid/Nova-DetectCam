@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face = mp.solutions.face_mesh
-
+seet=True
 # initializing FaceMesh models with minimum detection attributes, these are the values we can play with
 # the default values are weitten with them.
 
@@ -226,7 +226,23 @@ def applyFilter(source, imageFace, dstMat):
     # Turn the masks into three channel, so we can use them as weights
     overlay_mask = cv2.cvtColor(overlay_mask, cv2.COLOR_GRAY2BGR)
     background_mask = cv2.cvtColor(background_mask, cv2.COLOR_GRAY2BGR)
+    global seet
+    frame_height, frame_width, _ = imageFace.shape
+    if seet==True:
+        captured_image = cv2.copyMakeBorder(src=imageFace, top=10, bottom=10, left=10, right=10,
+                                                    borderType=cv2.BORDER_CONSTANT)
+                
+        # Capture an image and store it in the disk.
+        cv2.imwrite('Captured_Image.png', captured_image)
+        
+        # Display a black image.
+        # Play the image capture music to indicate the an image is captured and wait for 100 milliseconds.
+        cv2.waitKey(100)
 
+        # Display the captured image.
+        plt.close();cv2.figure(figsize=[10,10])
+        cv2.imshow(imageFace[:,:,::-1]);cv2.title("Captured Image");cv2.axis('off');
+        seet=True
     # Create a masked out face image, and masked out overlay
     # We convert the images to floating point in range 0.0 - 1.0
     face_part = (imageFace * (1 / 255.0)) * (background_mask * (1 / 255.0))
@@ -239,7 +255,7 @@ def applyFilter(source, imageFace, dstMat):
 # the main driver function that will open the camera and detect
 def modelDetection():
     # starting the camera
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     right_eye = cv2.imread('filters/red_eyes_right.png')
     left_eye = cv2.imread('filters/red_eyes_left.png')
     smoke = cv2.VideoCapture('filters/smoke.gif')
